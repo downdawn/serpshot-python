@@ -22,7 +22,6 @@
 SDK 使用以下 SerpShot API 端点：
 
 - **主搜索**: `/api/search/google` - 用于常规搜索和图片搜索
-- **免费版**: `/api/search/google/free` - 用于免费版搜索（有限制）
 
 ## 安装
 
@@ -37,6 +36,10 @@ pip install serpshot
 ```bash
 uv add serpshot
 ```
+
+## 获取 API 密钥
+
+在使用 SDK 之前，您需要从 [SerpShot 控制台](https://www.serpshot.com/dashboard/api-keys) 获取您的 API 密钥。
 
 ## 快速开始
 
@@ -324,7 +327,6 @@ client = SerpShot(api_key=api_key)
 - **常规搜索**: 每次请求 1 积分（基础）
 - **图片搜索**: 每次请求约 2 积分
 - **更高结果数量**: num > 10 时额外积分
-- **高级地区**: 某些国家的成本略高
 
 使用 `response.credits_used` 跟踪消耗情况。
 
@@ -377,7 +379,7 @@ ruff check serpshot
 
 - 📧 邮箱: support@serpshot.com
 - 📖 文档: https://www.serpshot.com/docs
-- 🐛 问题反馈: https://github.com/serpshot/serpshot-python/issues
+- 🐛 问题反馈: https://github.com/downdawn/serpshot-python/issues
 
 ## 链接
 

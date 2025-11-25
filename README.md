@@ -22,7 +22,6 @@ Official Python client for the [SerpShot API](https://www.serpshot.com) - Get Go
 The SDK uses the following SerpShot API endpoints:
 
 - **Main Search**: `/api/search/google` - For regular and image searches
-- **Free Tier**: `/api/search/google/free` - For free tier searches (limited)
 
 ## Installation
 
@@ -37,6 +36,10 @@ pip install serpshot
 ```bash
 uv add serpshot
 ```
+
+## Get Your API Key
+
+Before you can use the SDK, you need to get your API key from the [SerpShot Dashboard](https://www.serpshot.com/dashboard/api-keys).
 
 ## Quick Start
 
@@ -324,7 +327,6 @@ Different search operations consume different amounts of credits:
 - **Regular Search**: 1 credit per request (base)
 - **Image Search**: ~2 credits per request
 - **Higher result counts**: Additional credits for num > 10
-- **Premium regions**: Slightly higher costs for some countries
 
 Use `response.credits_used` to track consumption.
 
@@ -377,7 +379,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - 📧 Email: support@serpshot.com
 - 📖 Documentation: https://www.serpshot.com/docs
-- 🐛 Issues: https://github.com/serpshot/serpshot-python/issues
+- 🐛 Issues: https://github.com/downdawn/serpshot-python/issues
 
 ## Links
 
