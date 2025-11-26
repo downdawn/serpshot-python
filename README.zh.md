@@ -48,7 +48,7 @@ uv add serpshot
 ```python
 from serpshot import SerpShot
 
-# 初始化客户端
+# 初始化客户端（API 密钥可以显式提供或从 SERPSHOT_API_KEY 环境变量读取）
 client = SerpShot(api_key="your-api-key")
 
 # 执行搜索
@@ -67,7 +67,7 @@ client.close()
 ```python
 from serpshot import SerpShot
 
-with SerpShot(api_key="your-api-key") as client:
+with SerpShot(api_key="your-api-key") as client:  # 或如果设置了环境变量，可以使用 SerpShot()
     response = client.search("Python 编程")
     print(f"找到 {len(response.results)} 条结果")
 ```
@@ -96,7 +96,7 @@ asyncio.run(main())
 from serpshot import SerpShot
 
 client = SerpShot(
-    api_key="your-api-key",      # 必需：您的 SerpShot API 密钥
+    api_key="your-api-key",      # 可选：您的 SerpShot API 密钥（或设置 SERPSHOT_API_KEY 环境变量）
     base_url=None,                # 可选：自定义 API 端点
     timeout=30.0,                 # 可选：请求超时时间（秒）
     max_retries=3,                # 可选：最大重试次数
@@ -204,7 +204,7 @@ class ImageResult:
 ```python
 from serpshot import SerpShot
 
-with SerpShot(api_key="your-api-key") as client:
+with SerpShot(api_key="your-api-key") as client:  # 或如果设置了环境变量，可以使用 SerpShot()
     # 批量搜索 - 一次 API 调用处理多个查询
     queries = ["Python", "JavaScript", "Rust", "Go"]
     responses = client.search(queries, num=10)  # 返回 list[SearchResponse]
@@ -222,7 +222,7 @@ with SerpShot(api_key="your-api-key") as client:
 ```python
 from serpshot import SerpShot
 
-with SerpShot(api_key="your-api-key") as client:
+with SerpShot(api_key="your-api-key") as client:  # 或如果设置了环境变量，可以使用 SerpShot()
     # 获取第一页（结果 1-10）
     page1 = client.search("Python", num=10, page=1)
     
@@ -269,7 +269,7 @@ from serpshot import (
 )
 
 try:
-    with SerpShot(api_key="your-api-key") as client:
+    with SerpShot(api_key="your-api-key") as client:  # 或如果设置了环境变量，可以使用 SerpShot()
         response = client.search("测试查询")
         
 except AuthenticationError as e:
@@ -300,20 +300,28 @@ client = SerpShot(
 
 ## 环境变量
 
-您可以通过环境变量设置 API 密钥：
+您可以通过环境变量设置 API 密钥。SDK 会自动从 `SERPSHOT_API_KEY` 环境变量读取，如果未提供 `api_key` 参数：
 
 ```bash
 export SERPSHOT_API_KEY="your-api-key"
 ```
 
-然后在代码中使用：
+然后在代码中使用，无需传递 `api_key`：
 
 ```python
-import os
 from serpshot import SerpShot
 
-api_key = os.getenv("SERPSHOT_API_KEY")
-client = SerpShot(api_key=api_key)
+# API 密钥会自动从 SERPSHOT_API_KEY 环境变量读取
+client = SerpShot()
+```
+
+您也可以显式提供 API 密钥，这会优先于环境变量：
+
+```python
+from serpshot import SerpShot
+
+# 显式提供的 API 密钥优先
+client = SerpShot(api_key="your-api-key")
 ```
 
 ## 速率限制
@@ -336,7 +344,7 @@ client = SerpShot(api_key=api_key)
 
 ```bash
 # 克隆仓库
-git clone https://github.com/serpshot/serpshot-python.git
+git clone https://github.com/downdawn/serpshot-python.git
 cd serpshot-python
 
 # 使用 uv 安装开发依赖

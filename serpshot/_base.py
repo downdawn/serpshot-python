@@ -1,5 +1,6 @@
 """Base client with shared logic for sync and async clients."""
 
+import os
 from typing import Any
 
 from ._auth import AuthHandler
@@ -8,15 +9,43 @@ from .types import LocationType, QueryParams, SearchType
 
 __all__ = ["BaseClient"]
 
+# Environment variable name for API key
+ENV_API_KEY = "SERPSHOT_API_KEY"
+
 
 class BaseClient:
     """Base client containing shared logic."""
 
     DEFAULT_BASE_URL = "https://api.serpshot.com"
 
+    @staticmethod
+    def _get_api_key(api_key: str | None = None) -> str:
+        """Get API key from parameter or environment variable.
+
+        Args:
+            api_key: API key provided directly, or None to read from environment
+
+        Returns:
+            API key string
+
+        Raises:
+            ValueError: If API key is not provided and not found in environment
+        """
+        if api_key:
+            return api_key
+
+        env_key = os.getenv(ENV_API_KEY)
+        if env_key:
+            return env_key
+
+        raise ValueError(
+            f"API key is required. Either provide it as 'api_key' parameter "
+            f"or set the {ENV_API_KEY} environment variable."
+        )
+
     def __init__(
         self,
-        api_key: str,
+        api_key: str | None = None,
         base_url: str | None = None,
         timeout: float = 30.0,
         max_retries: int = 3,
@@ -24,12 +53,14 @@ class BaseClient:
         """Initialize base client.
 
         Args:
-            api_key: SerpShot API key
+            api_key: SerpShot API key. If not provided, will try to read from
+                SERPSHOT_API_KEY environment variable.
             base_url: API base URL (optional)
             timeout: Request timeout in seconds
             max_retries: Maximum retry attempts
         """
-        self.auth = AuthHandler(api_key)
+        resolved_api_key = self._get_api_key(api_key)
+        self.auth = AuthHandler(resolved_api_key)
         self.base_url = (base_url or self.DEFAULT_BASE_URL).rstrip("/")
         self.timeout = timeout
         self.max_retries = max_retries

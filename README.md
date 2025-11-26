@@ -48,7 +48,7 @@ Before you can use the SDK, you need to get your API key from the [SerpShot Dash
 ```python
 from serpshot import SerpShot
 
-# Initialize client
+# Initialize client (API key can be provided or read from SERPSHOT_API_KEY env var)
 client = SerpShot(api_key="your-api-key")
 
 # Perform a search
@@ -67,7 +67,7 @@ client.close()
 ```python
 from serpshot import SerpShot
 
-with SerpShot(api_key="your-api-key") as client:
+with SerpShot(api_key="your-api-key") as client:  # Or use SerpShot() if env var is set
     response = client.search("Python programming")
     print(f"Found {len(response.results)} results")
 ```
@@ -96,7 +96,7 @@ asyncio.run(main())
 from serpshot import SerpShot
 
 client = SerpShot(
-    api_key="your-api-key",      # Required: Your SerpShot API key
+    api_key="your-api-key",      # Optional: Your SerpShot API key (or set SERPSHOT_API_KEY env var)
     base_url=None,                # Optional: Custom API endpoint
     timeout=30.0,                 # Optional: Request timeout in seconds
     max_retries=3,                # Optional: Maximum retry attempts
@@ -204,7 +204,7 @@ The most efficient way to search multiple queries is using batch search, which m
 ```python
 from serpshot import SerpShot
 
-with SerpShot(api_key="your-api-key") as client:
+with SerpShot(api_key="your-api-key") as client:  # Or use SerpShot() if env var is set
     # Batch search - single API call for multiple queries
     queries = ["Python", "JavaScript", "Rust", "Go"]
     responses = client.search(queries, num=10)  # Returns list[SearchResponse]
@@ -222,7 +222,7 @@ with SerpShot(api_key="your-api-key") as client:
 ```python
 from serpshot import SerpShot
 
-with SerpShot(api_key="your-api-key") as client:
+with SerpShot(api_key="your-api-key") as client:  # Or use SerpShot() if env var is set
     # Get first page (results 1-10)
     page1 = client.search("Python", num=10, page=1)
     
@@ -269,7 +269,7 @@ from serpshot import (
 )
 
 try:
-    with SerpShot(api_key="your-api-key") as client:
+    with SerpShot(api_key="your-api-key") as client:  # Or use SerpShot() if env var is set
         response = client.search("test query")
         
 except AuthenticationError as e:
@@ -300,20 +300,28 @@ client = SerpShot(
 
 ## Environment Variables
 
-You can set your API key via environment variable:
+You can set your API key via environment variable. The SDK will automatically read from the `SERPSHOT_API_KEY` environment variable if the `api_key` parameter is not provided:
 
 ```bash
 export SERPSHOT_API_KEY="your-api-key"
 ```
 
-Then use in code:
+Then use in code without passing `api_key`:
 
 ```python
-import os
 from serpshot import SerpShot
 
-api_key = os.getenv("SERPSHOT_API_KEY")
-client = SerpShot(api_key=api_key)
+# API key will be automatically read from SERPSHOT_API_KEY environment variable
+client = SerpShot()
+```
+
+You can also still provide the API key explicitly, which takes precedence over the environment variable:
+
+```python
+from serpshot import SerpShot
+
+# Explicit API key takes precedence
+client = SerpShot(api_key="your-api-key")
 ```
 
 ## Rate Limits
@@ -336,7 +344,7 @@ Use `response.credits_used` to track consumption.
 
 ```bash
 # Clone the repository
-git clone https://github.com/serpshot/serpshot-python.git
+git clone https://github.com/downdawn/serpshot-python.git
 cd serpshot-python
 
 # Install with dev dependencies using uv

@@ -30,7 +30,7 @@ class SerpShot(BaseClient):
 
     def __init__(
         self,
-        api_key: str,
+        api_key: str | None = None,
         base_url: str | None = None,
         timeout: float = 30.0,
         max_retries: int = 3,
@@ -38,7 +38,8 @@ class SerpShot(BaseClient):
         """Initialize synchronous SerpShot client.
 
         Args:
-            api_key: SerpShot API key
+            api_key: SerpShot API key. If not provided, will try to read from
+                SERPSHOT_API_KEY environment variable.
             base_url: API base URL (optional, defaults to production)
             timeout: Request timeout in seconds
             max_retries: Maximum retry attempts for failed requests

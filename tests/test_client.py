@@ -1,5 +1,6 @@
 """Unit tests for SerpShot SDK."""
 
+import os
 import pytest
 
 from serpshot import (
@@ -166,6 +167,46 @@ class TestSyncClient:
         with SerpShot(api_key="test-key-12345") as client:
             assert client is not None
 
+    def test_initialization_without_api_key_raises_error(self):
+        """Test that initialization without API key raises error when env var is not set."""
+        # Ensure env var is not set
+        original_value = os.environ.pop("SERPSHOT_API_KEY", None)
+        try:
+            with pytest.raises(ValueError, match="API key is required"):
+                SerpShot()
+        finally:
+            # Restore original value if it existed
+            if original_value:
+                os.environ["SERPSHOT_API_KEY"] = original_value
+
+    def test_initialization_from_env_var(self):
+        """Test that initialization reads from environment variable."""
+        original_value = os.environ.get("SERPSHOT_API_KEY")
+        try:
+            os.environ["SERPSHOT_API_KEY"] = "env-test-key-12345"
+            client = SerpShot()
+            assert client.auth.api_key == "env-test-key-12345"
+        finally:
+            # Restore original value
+            if original_value:
+                os.environ["SERPSHOT_API_KEY"] = original_value
+            else:
+                os.environ.pop("SERPSHOT_API_KEY", None)
+
+    def test_explicit_api_key_overrides_env_var(self):
+        """Test that explicit API key takes precedence over environment variable."""
+        original_value = os.environ.get("SERPSHOT_API_KEY")
+        try:
+            os.environ["SERPSHOT_API_KEY"] = "env-test-key"
+            client = SerpShot(api_key="explicit-test-key")
+            assert client.auth.api_key == "explicit-test-key"
+        finally:
+            # Restore original value
+            if original_value:
+                os.environ["SERPSHOT_API_KEY"] = original_value
+            else:
+                os.environ.pop("SERPSHOT_API_KEY", None)
+
 
 class TestAsyncClient:
     """Test asynchronous client."""
@@ -186,6 +227,45 @@ class TestAsyncClient:
         """Test async context manager usage."""
         async with AsyncSerpShot(api_key="test-key-12345") as client:
             assert client is not None
+
+    def test_initialization_without_api_key_raises_error(self):
+        """Test that async initialization without API key raises error when env var is not set."""
+        original_value = os.environ.pop("SERPSHOT_API_KEY", None)
+        try:
+            with pytest.raises(ValueError, match="API key is required"):
+                AsyncSerpShot()
+        finally:
+            # Restore original value if it existed
+            if original_value:
+                os.environ["SERPSHOT_API_KEY"] = original_value
+
+    def test_initialization_from_env_var(self):
+        """Test that async initialization reads from environment variable."""
+        original_value = os.environ.get("SERPSHOT_API_KEY")
+        try:
+            os.environ["SERPSHOT_API_KEY"] = "env-test-key-12345"
+            client = AsyncSerpShot()
+            assert client.auth.api_key == "env-test-key-12345"
+        finally:
+            # Restore original value
+            if original_value:
+                os.environ["SERPSHOT_API_KEY"] = original_value
+            else:
+                os.environ.pop("SERPSHOT_API_KEY", None)
+
+    def test_explicit_api_key_overrides_env_var(self):
+        """Test that explicit API key takes precedence over environment variable."""
+        original_value = os.environ.get("SERPSHOT_API_KEY")
+        try:
+            os.environ["SERPSHOT_API_KEY"] = "env-test-key"
+            client = AsyncSerpShot(api_key="explicit-test-key")
+            assert client.auth.api_key == "explicit-test-key"
+        finally:
+            # Restore original value
+            if original_value:
+                os.environ["SERPSHOT_API_KEY"] = original_value
+            else:
+                os.environ.pop("SERPSHOT_API_KEY", None)
 
 
 class TestSearchResponse:
@@ -227,13 +307,27 @@ class TestIntegration:
     @pytest.mark.skip(reason="Requires API key and credits")
     def test_real_search(self):
         """Test real API search (requires API key)."""
-        import os
         api_key = os.getenv("SERPSHOT_API_KEY")
         
         if not api_key:
             pytest.skip("SERPSHOT_API_KEY not set")
         
+        # Test with explicit API key
         with SerpShot(api_key=api_key) as client:
+            response = client.search("Python", num=5)
+            assert response.success
+            assert len(response.results) > 0
+
+    @pytest.mark.skip(reason="Requires API key and credits")
+    def test_real_search_from_env_var(self):
+        """Test real API search using environment variable."""
+        api_key = os.getenv("SERPSHOT_API_KEY")
+        
+        if not api_key:
+            pytest.skip("SERPSHOT_API_KEY not set")
+        
+        # Test with environment variable (should work if env var is set)
+        with SerpShot() as client:
             response = client.search("Python", num=5)
             assert response.success
             assert len(response.results) > 0
@@ -242,13 +336,28 @@ class TestIntegration:
     @pytest.mark.asyncio
     async def test_real_async_search(self):
         """Test real async API search (requires API key)."""
-        import os
         api_key = os.getenv("SERPSHOT_API_KEY")
         
         if not api_key:
             pytest.skip("SERPSHOT_API_KEY not set")
         
+        # Test with explicit API key
         async with AsyncSerpShot(api_key=api_key) as client:
+            response = await client.search("Python", num=5)
+            assert response.success
+            assert len(response.results) > 0
+
+    @pytest.mark.skip(reason="Requires API key and credits")
+    @pytest.mark.asyncio
+    async def test_real_async_search_from_env_var(self):
+        """Test real async API search using environment variable."""
+        api_key = os.getenv("SERPSHOT_API_KEY")
+        
+        if not api_key:
+            pytest.skip("SERPSHOT_API_KEY not set")
+        
+        # Test with environment variable (should work if env var is set)
+        async with AsyncSerpShot() as client:
             response = await client.search("Python", num=5)
             assert response.success
             assert len(response.results) > 0

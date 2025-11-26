@@ -1,6 +1,6 @@
 [project]
 name = "serpshot"
-version = "0.1.1"
+version = "0.1.2"
 description = "Official Python SDK for SerpShot API - Google Search Results"
 readme = "README.md"
 requires-python = ">=3.10"

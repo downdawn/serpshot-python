@@ -6,6 +6,7 @@ Example:
     Synchronous usage:
         >>> from serpshot import SerpShot
         >>>
+        >>> # API key can be provided explicitly or read from SERPSHOT_API_KEY env var
         >>> serpshot_client = SerpShot(api_key="your-api-key")
         >>> with serpshot_client:
         ...     response = serpshot_client.search("Python programming")
@@ -17,6 +18,7 @@ Example:
         >>> from serpshot import AsyncSerpShot
         >>>
         >>> async def main():
+        ...     # API key can be provided explicitly or read from SERPSHOT_API_KEY env var
         ...     async_serpshot_client = AsyncSerpShot(api_key="your-api-key")
         ...     async with async_serpshot_client:
         ...         response = await async_serpshot_client.search("Python programming")
@@ -25,7 +27,7 @@ Example:
         >>> asyncio.run(main())
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 from ._auth import AuthHandler
 from .async_client import AsyncSerpShot
