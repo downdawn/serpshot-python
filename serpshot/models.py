@@ -25,10 +25,32 @@ class SearchRequest(BaseModel):
     gl: str = Field(default="us", description="Country code (e.g., 'us', 'cn')")
     hl: str = Field(default="en", description="Interface language (e.g., 'en', 'zh-CN')")
     lr: str = Field(default="en", description="Content language restriction (e.g., 'en', 'zh-CN')")
-    location: LocationType | None = Field(
+    location: str | LocationType | None = Field(
         default=None,
-        description="Location for local search (e.g., LocationType.US, LocationType.GB)",
+        description="Location for local search (e.g., 'US', 'GB', or LocationType.US). "
+        "Can be a LocationType enum or any custom location string.",
     )
+
+    @field_validator("location", mode="before")
+    @classmethod
+    def validate_location(cls, v: str | LocationType | None) -> str | LocationType | None:
+        """Convert string to LocationType enum if it matches, otherwise keep as string.
+
+        This allows backward compatibility when backend adds new locations
+        that aren't yet defined in the SDK.
+        """
+        if v is None:
+            return None
+        if isinstance(v, LocationType):
+            return v
+        if isinstance(v, str):
+            # Try to convert to enum if it matches, but don't fail if it doesn't
+            try:
+                return LocationType(v.upper())
+            except ValueError:
+                # Not a known enum value, but that's OK - pass it as-is to backend
+                return v.upper()
+        return v
 
     @field_validator("queries")
     @classmethod

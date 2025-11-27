@@ -27,7 +27,7 @@ Example:
         >>> asyncio.run(main())
 """
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 from ._auth import AuthHandler
 from .async_client import AsyncSerpShot

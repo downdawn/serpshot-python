@@ -1,21 +1,20 @@
 # SerpShot Python SDK
 
-Official Python client for the [SerpShot API](https://www.serpshot.com) - Get Google Search Results programmatically.
+Official Python client for the [SerpShot API](https://www.serpshot.com) - Get real-time Google search results programmatically.
 
 [![Python Version](https://img.shields.io/pypi/pyversions/serpshot)](https://pypi.org/project/serpshot/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [中文文档](README.zh.md) | [English](README.md)
 
-## Features
+## Key Features
 
-- ✅ **Synchronous & Asynchronous** - Support for both sync and async operations
-- ✅ **Type Safe** - Full type hints with Pydantic models
-- ✅ **Automatic Retries** - Built-in exponential backoff for failed requests
-- ✅ **Error Handling** - Comprehensive exception hierarchy
-- ✅ **Easy to Use** - Simple, intuitive API
-- ✅ **Google Search** - Regular search and image search
-- ✅ **Customizable** - Flexible configuration options
+- ⚡ **Lightning Fast** - Get results in 1-2 seconds with optimized infrastructure
+- 🌍 **Global Coverage** - Support for 200+ countries and regions
+- 🔒 **Reliable & Secure** - 99.9% uptime SLA with enterprise-grade security
+- 🚀 **Developer Friendly** - Sync/async support, full type hints, intuitive API
+- 🔄 **Batch Queries** - Process up to 100 queries in a single request
+- 🛡️ **Smart Retries** - Built-in retry logic handles network issues automatically
 
 ## API Endpoints
 
@@ -39,7 +38,7 @@ uv add serpshot
 
 ## Get Your API Key
 
-Before you can use the SDK, you need to get your API key from the [SerpShot Dashboard](https://www.serpshot.com/dashboard/api-keys).
+Free to use, just [register](https://www.serpshot.com/auth/register) to get your API key.
 
 ## Quick Start
 
@@ -67,7 +66,7 @@ client.close()
 ```python
 from serpshot import SerpShot
 
-with SerpShot(api_key="your-api-key") as client:  # Or use SerpShot() if env var is set
+with SerpShot(api_key="your-api-key") as client:
     response = client.search("Python programming")
     print(f"Found {len(response.results)} results")
 ```
@@ -84,6 +83,22 @@ async def main():
         print(f"Found {len(response.results)} results")
 
 asyncio.run(main())
+```
+
+### Using Environment Variable
+
+You can set your API key via the `SERPSHOT_API_KEY` environment variable, eliminating the need to pass it explicitly:
+
+```bash
+export SERPSHOT_API_KEY="your-api-key"
+```
+
+```python
+from serpshot import SerpShot
+
+# API key will be automatically read from environment variable
+with SerpShot() as client:
+    response = client.search("Python programming")
 ```
 
 ## API Reference
@@ -108,7 +123,7 @@ client = SerpShot(
 Perform a Google search. Supports both single query and batch queries (up to 100 queries per request).
 
 ```python
-from serpshot import SerpShot, LocationType
+from serpshot import SerpShot
 
 # Single search
 response = client.search(
@@ -118,16 +133,20 @@ response = client.search(
     gl="us",                      # Optional: Country code (e.g., 'us', 'uk', 'cn')
     hl="en",                      # Optional: Language code (e.g., 'en', 'zh-CN')
     lr="en",                      # Optional: Content language restriction (e.g., 'en', 'zh-CN')
-    location=LocationType.US,    # Optional: Location type for local search
+    location="US",                # Optional: Location for local search (e.g., 'US', 'GB', 'CN')
 )
 
 # Batch search (recommended for multiple queries)
 responses = client.search(
     query=["Python", "JavaScript", "Rust"],  # List of queries (1-100)
     num=10,
+    gl="us",
+    location="US",               # String location parameter supported
 )
 # Returns list[SearchResponse] when query is a list
 ```
+
+**Note**: The `location` parameter accepts strings (recommended) or `LocationType` enum values.
 
 #### image_search()
 
@@ -197,15 +216,14 @@ class ImageResult:
 
 ## Advanced Examples
 
-### Batch Search (Recommended)
+### Batch Search
 
-The most efficient way to search multiple queries is using batch search, which makes a single API call:
+Batch search allows you to process multiple queries (up to 100) in a single API call, which is more efficient than separate calls:
 
 ```python
 from serpshot import SerpShot
 
-with SerpShot(api_key="your-api-key") as client:  # Or use SerpShot() if env var is set
-    # Batch search - single API call for multiple queries
+with SerpShot(api_key="your-api-key") as client:
     queries = ["Python", "JavaScript", "Rust", "Go"]
     responses = client.search(queries, num=10)  # Returns list[SearchResponse]
     
@@ -215,27 +233,18 @@ with SerpShot(api_key="your-api-key") as client:  # Or use SerpShot() if env var
             print(f"  Top result: {response.results[0].title}\n")
 ```
 
-**Note**: Batch search supports up to 100 queries per request and is more efficient than making separate API calls.
-
 ### Pagination
 
 ```python
 from serpshot import SerpShot
 
-with SerpShot(api_key="your-api-key") as client:  # Or use SerpShot() if env var is set
-    # Get first page (results 1-10)
+with SerpShot(api_key="your-api-key") as client:
     page1 = client.search("Python", num=10, page=1)
-    
-    # Get second page (results 11-20)
     page2 = client.search("Python", num=10, page=2)
-    
-    # Get third page (results 21-30)
     page3 = client.search("Python", num=10, page=3)
 ```
 
-### Asynchronous Usage
-
-For async applications, you can use `AsyncSerpShot`:
+### Asynchronous Batch Search
 
 ```python
 import asyncio
@@ -243,12 +252,7 @@ from serpshot import AsyncSerpShot
 
 async def main():
     async with AsyncSerpShot(api_key="your-api-key") as client:
-        # Single async search
-        response = await client.search("Python programming")
-        print(f"Found {len(response.results)} results")
-        
-        # Batch async search
-        queries = ["Python", "JavaScript"]
+        queries = ["Python", "JavaScript", "Rust"]
         responses = await client.search(queries, num=10)
         for response in responses:
             print(f"Found {len(response.results)} results")
@@ -269,21 +273,16 @@ from serpshot import (
 )
 
 try:
-    with SerpShot(api_key="your-api-key") as client:  # Or use SerpShot() if env var is set
+    with SerpShot(api_key="your-api-key") as client:
         response = client.search("test query")
-        
 except AuthenticationError as e:
     print(f"Invalid API key: {e}")
-    
 except RateLimitError as e:
     print(f"Rate limit exceeded. Retry after {e.retry_after}s")
-    
 except InsufficientCreditsError as e:
     print(f"Insufficient credits. Need: {e.credits_required}")
-    
 except APIError as e:
     print(f"API error ({e.status_code}): {e.message}")
-    
 except NetworkError as e:
     print(f"Network error: {e}")
 ```
@@ -298,30 +297,14 @@ client = SerpShot(
 )
 ```
 
-## Environment Variables
-
-You can set your API key via environment variable. The SDK will automatically read from the `SERPSHOT_API_KEY` environment variable if the `api_key` parameter is not provided:
-
-```bash
-export SERPSHOT_API_KEY="your-api-key"
-```
-
-Then use in code without passing `api_key`:
+## Get Available Credits
 
 ```python
 from serpshot import SerpShot
 
-# API key will be automatically read from SERPSHOT_API_KEY environment variable
-client = SerpShot()
-```
-
-You can also still provide the API key explicitly, which takes precedence over the environment variable:
-
-```python
-from serpshot import SerpShot
-
-# Explicit API key takes precedence
-client = SerpShot(api_key="your-api-key")
+with SerpShot(api_key="your-api-key") as client:
+    credits = client.get_available_credits()
+    print(f"Available credits: {credits}")
 ```
 
 ## Rate Limits
@@ -330,13 +313,9 @@ Please refer to your SerpShot account dashboard for rate limit information. The 
 
 ## Credit Costs
 
-Different search operations consume different amounts of credits:
+Different search operations consume different amounts of credits.
 
-- **Regular Search**: 1 credit per request (base)
-- **Image Search**: ~2 credits per request
-- **Higher result counts**: Additional credits for num > 10
-
-Use `response.credits_used` to track consumption.
+Use the `response.credits_used` field to track actual credit consumption for each request.
 
 ## Development
 

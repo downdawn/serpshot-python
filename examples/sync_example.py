@@ -1,6 +1,6 @@
 """Synchronous usage examples for SerpShot SDK."""
 
-from serpshot import LocationType, SerpShot, SerpShotError
+from serpshot import SerpShot, SerpShotError
 from serpshot.models import SearchResponse
 
 # Replace with your actual API key
@@ -34,13 +34,14 @@ def advanced_search_example():
     
     with SerpShot(api_key=API_KEY) as client:
         # Search with additional parameters
+        # location parameter accepts simple string format
         response = client.search(
             "best restaurants",
             num=20,
             gl="us",
             hl="en",
             lr="en",
-            location=LocationType.US,
+            location="US",  # String format (recommended): 'US', 'GB', 'CN', etc.
         )
         
         print(f"Found {len(response.results)} results for '{response.query}'")
@@ -49,13 +50,16 @@ def advanced_search_example():
 
 
 def image_search_example():
-    """Image search example."""
+    """Image search example with location parameter."""
     print("=== Image Search Example ===\n")
     
     with SerpShot(api_key=API_KEY) as client:
+        # Image search with simple string location parameter
         response = client.image_search(
             "cute puppies",
             num=10,
+            gl="us",
+            location="US",  # Simple string format
         )
         
         print(f"Found {len(response.results)} images\n")
@@ -112,6 +116,15 @@ def error_handling_example():
         print(f"Unexpected error: {unexpected_error}")
 
 
+def get_credits_example():
+    """Get available credits example."""
+    print("=== Get Available Credits Example ===\n")
+    
+    with SerpShot(api_key=API_KEY) as client:
+        credits = client.get_available_credits()
+        print(f"Available credits: {credits}")
+
+
 def batch_search_example():
     """Batch search example.
     
@@ -138,6 +151,9 @@ def batch_search_example():
 if __name__ == "__main__":
     # Run all examples
     try:
+        get_credits_example()
+        print("\n" + "="*50 + "\n")
+        
         basic_search_example()
         print("\n" + "="*50 + "\n")
         

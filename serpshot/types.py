@@ -1,9 +1,9 @@
 """Type definitions and enumerations for SerpShot SDK."""
 
 from enum import Enum
-from typing import Any, TypeAlias
+from typing import TypeAlias
 
-__all__ = ["SearchType", "Device", "LocationType", "Headers", "QueryParams"]
+__all__ = ["SearchType", "Device", "LocationType", "Headers"]
 
 
 class SearchType(str, Enum):
@@ -42,4 +42,3 @@ class LocationType(str, Enum):
 
 # Type aliases
 Headers: TypeAlias = dict[str, str]
-QueryParams: TypeAlias = dict[str, Any]

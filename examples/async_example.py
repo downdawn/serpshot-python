@@ -27,6 +27,15 @@ async def basic_search_example():
             print(f"   {result.link}\n")
 
 
+async def get_credits_example():
+    """Get available credits example."""
+    print("=== Get Available Credits Example ===\n")
+    
+    async with AsyncSerpShot(api_key=API_KEY) as client:
+        credits = await client.get_available_credits()
+        print(f"Available credits: {credits}")
+
+
 async def batch_search_example():
     """Batch search example using search with list.
     
@@ -48,7 +57,7 @@ async def batch_search_example():
         
         # Pass list to search() - single API call, returns list of responses
         responses = await client.search(queries, num=5)
-        
+
         # Process results
         # Type check: responses is list[SearchResponse] when query is list[str]
         if isinstance(responses, list):
@@ -56,6 +65,30 @@ async def batch_search_example():
                 print(f"{query}: {len(response.results)} results")
                 if response.results:
                     print(f"  Top result: {response.results[0].title}\n")
+
+async def location_search_example():
+    """Search with location parameter example - using string (recommended)."""
+    print("=== Location Search Example ===\n")
+    
+    async with AsyncSerpShot(api_key=API_KEY) as client:
+        # Search with location parameter for local results
+        # Using string format (recommended and simpler)
+        response = await client.search(
+            "best restaurants",
+            num=10,
+            gl="us",
+            location="US",  # String format: 'US', 'GB', 'CN', etc.
+        )
+        
+        print(f"Found {len(response.results)} results for '{response.query}'")
+        print(f"Total results: {response.total_results}")
+        print(f"Search time: {response.search_time}s")
+        if response.results:
+            print(f"Top result: {response.results[0].title}")
+            print(f"Top result URL: {response.results[0].link}\n")
+        else:
+            print("No results found.\n")
+
 
 async def concurrent_searches_example():
     """Concurrent searches example with different parameters."""
@@ -65,9 +98,9 @@ async def concurrent_searches_example():
         # When queries need different parameters, use asyncio.gather
         # For same parameters, prefer batch_search_example() instead
         tasks = [
-            client.search("Python programming", num=10, gl="us"),
-            client.search("JavaScript tutorials", num=5, gl="uk"),
-            client.search("Rust language", num=20, gl="us"),
+            client.search("Python programming", num=10, gl="us", location="US"),
+            client.search("JavaScript tutorials", num=5, gl="uk", location="GB"),
+            client.search("Rust language", num=20, gl="us", location="US"),
         ]
         
         # Wait for all to complete
@@ -83,7 +116,7 @@ async def concurrent_searches_example():
 
 
 async def concurrent_image_searches_example():
-    """Batch image searches example using queries parameter."""
+    """Batch image searches example with location parameter."""
     print("=== Batch Image Searches Example ===\n")
     
     async with AsyncSerpShot(api_key=API_KEY) as client:
@@ -91,7 +124,13 @@ async def concurrent_image_searches_example():
         queries = ["cute cats", "beautiful landscapes", "modern architecture"]
         
         # Pass list to image_search() - single API call for all queries
-        responses = await client.image_search(queries, num=5)
+        # Include location parameter for local results
+        responses = await client.image_search(
+            queries, 
+            num=5,
+            gl="us",
+            location="US",
+        )
         
         # Process results
         if isinstance(responses, list):
@@ -135,67 +174,18 @@ async def error_handling_example():
         print(f"Unexpected error: {unexpected_error}")
 
 
-async def batch_with_progress_example():
-    """Batch processing with progress tracking."""
-    print("=== Batch Processing with Progress Example ===\n")
-    
-    async with AsyncSerpShot(api_key=API_KEY) as client:
-        queries = [
-            "Python tutorial",
-            "JavaScript guide",
-            "Rust programming",
-            "Go language",
-            "TypeScript basics",
-        ]
-        
-        print(f"Processing {len(queries)} queries in batch...\n")
-        
-        # Use batch search for better efficiency (single API call)
-        responses = await client.search(queries, num=3)
-        
-        # Process results
-        if isinstance(responses, list):
-            for i, (query, response) in enumerate(zip(queries, responses), 1):
-                print(f"[{i}/{len(queries)}] {query}: {len(response.results)} results")
-            
-            print(f"\nCompleted! Total results: {sum(len(r.results) for r in responses)}")
-
-
-async def advanced_concurrent_example():
-    """Advanced example: batch vs concurrent for different scenarios."""
-    print("=== Advanced Example: Batch vs Concurrent ===\n")
-    
-    async with AsyncSerpShot(api_key=API_KEY) as client:
-        # Scenario 1: Same parameters - use batch search (more efficient)
-        print("Scenario 1: Batch search (same parameters)")
-        batch_queries = [f"Python topic {i}" for i in range(5)]
-        batch_responses = await client.search(batch_queries, num=5)
-        if isinstance(batch_responses, list):
-            print(f"  ✓ Processed {len(batch_responses)} queries in 1 API call\n")
-        
-        # Scenario 2: Different parameters - use concurrent with semaphore
-        print("Scenario 2: Concurrent search (different parameters)")
-        semaphore = asyncio.Semaphore(3)  # Limit to 3 concurrent requests
-        
-        async def search_with_limit(query, num_results):
-            async with semaphore:
-                return await client.search(query, num=num_results)
-        
-        concurrent_tasks = [
-            search_with_limit(f"Query {i}", num_results=5 + i)
-            for i in range(5)
-        ]
-        concurrent_responses = await asyncio.gather(*concurrent_tasks)
-        print(f"  ✓ Processed {len(concurrent_responses)} queries with rate limiting\n")
-        
-        print("Tip: Use batch search when parameters are the same, "
-              "use concurrent when parameters differ")
 
 
 async def main():
     """Run all async examples."""
     try:
+        await get_credits_example()
+        print("\n" + "="*50 + "\n")
+
         await basic_search_example()
+        print("\n" + "="*50 + "\n")
+
+        await location_search_example()
         print("\n" + "="*50 + "\n")
 
         await batch_search_example()
@@ -212,16 +202,13 @@ async def main():
         await mixed_search_types_example()
         print("\n" + "="*50 + "\n")
 
-        await batch_with_progress_example()
-        print("\n" + "="*50 + "\n")
-
-        await advanced_concurrent_example()
-        print("\n" + "="*50 + "\n")
-
         await error_handling_example()
         
     except Exception as main_error:
+        import traceback
         print(f"Error running examples: {main_error}")
+        print(f"Error type: {type(main_error).__name__}")
+        traceback.print_exc()
         print("\nMake sure to set your API_KEY at the top of this file!")
 
 

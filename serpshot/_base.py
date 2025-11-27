@@ -5,7 +5,7 @@ from typing import Any
 
 from ._auth import AuthHandler
 from .models import SearchRequest, SearchResponse
-from .types import LocationType, QueryParams, SearchType
+from .types import LocationType, SearchType
 
 __all__ = ["BaseClient"]
 
@@ -65,104 +65,97 @@ class BaseClient:
         self.timeout = timeout
         self.max_retries = max_retries
 
+
     @staticmethod
-    def _build_search_params(
-            query: str,
-        search_type: SearchType = SearchType.SEARCH,
-        num: int = 10,
-        page: int = 1,
-        gl: str = "us",
-        hl: str = "en",
-        lr: str = "en",
-        location: LocationType | None = None,
-        **extra_params: Any,
-    ) -> QueryParams:
-        """Build search request parameters.
+    def _transform_image_result(result: dict[str, Any]) -> dict[str, Any]:
+        """Transform backend image result fields to client schema.
+
+        Backend fields -> Client fields:
+        - imageUrl -> link (the actual image URL)
+        - link -> source_link (the source page URL)
+        - imageWidth -> width
+        - imageHeight -> height
 
         Args:
-            query: Search query
-            search_type: Type of search (search or image)
-            num: Number of results per page (1-100, default: 10)
-            page: Page number for pagination (starts from 1, default: 1)
-            gl: Country code
-            hl: Interface language code
-            lr: Content language restriction
-            location: Location type for local search
-            **extra_params: Additional parameters
+            result: Raw image result from backend
 
         Returns:
-            Dictionary of query parameters
+            Transformed result matching ImageResult schema
         """
-        # Validate using Pydantic model
-        request = SearchRequest(
-            queries=[query],  # Convert single query to list
-            type=search_type,
-            num=num,
-            page=page,
-            gl=gl,
-            hl=hl,
-            lr=lr,
-            location=location,
-        )
-
-        # Convert to dict and filter None values
-        params = request.model_dump(exclude_none=True)
-
-        # Convert enum values to strings
-        if "type" in params:
-            params["type"] = params["type"].value
-
-        # Add any extra parameters
-        params.update(extra_params)
-
-        return params
+        return {
+            "title": result.get("title", ""),
+            "link": result.get("imageUrl", ""),
+            "thumbnail": result.get("thumbnailUrl", ""),
+            "source": result.get("source", ""),
+            "source_link": result.get("link", ""),
+            "width": result.get("imageWidth", 0),
+            "height": result.get("imageHeight", 0),
+            "position": result.get("position", 0),
+        }
 
     @staticmethod
-    def _parse_search_response(data: dict[str, Any] | list[dict[str, Any]]) -> SearchResponse:
+    def _parse_search_response(
+        data: dict[str, Any] | list[dict[str, Any]] | None,
+        query: str = "",
+    ) -> SearchResponse:
         """Parse API response into SearchResponse model.
 
         Args:
-            data: Raw API response data (can be dict or list of dicts)
+            data: Raw API response data (can be dict, list of dicts, or None)
+            query: Original query string (used as fallback if data is empty)
 
         Returns:
-            Parsed SearchResponse model
+            Parsed SearchResponse model (with empty results if no data)
         """
+        # Handle empty or None data - return empty response instead of raising exception
+        if data is None:
+            return SearchResponse(
+                success=True,
+                query=query,
+                total_results="0",
+                search_time="0",
+                results=[],
+                credits_used=0,
+            )
+
         # If backend returns a list (for batch queries), take the first result
         if isinstance(data, list):
             if not data:
-                raise ValueError("Empty response from API")
+                # Empty list is a valid response - return empty SearchResponse
+                return SearchResponse(
+                    success=True,
+                    query=query,
+                    total_results="0",
+                    search_time="0",
+                    results=[],
+                    credits_used=0,
+                )
             data = data[0]
 
         # Backend response structure mapping
-        search_info = data.get("search_info", {})
+        search_info = data.get("search_info", {}) if isinstance(data, dict) else {}
+        results = data.get("results", []) if isinstance(data, dict) else []
+        search_type = (
+            data.get("search_params", {}).get("type", "search")
+            if isinstance(data, dict)
+            else "search"
+        )
 
         # Transform image results to match client schema
-        results = data.get("results", [])
-        search_type = data.get("search_params", {}).get("type", "search")
-
         if search_type == "image":
-            # Map backend image fields to client schema
-            results = [
-                {
-                    "title": r.get("title", ""),
-                    "link": r.get("imageUrl", ""),  # Backend imageUrl -> client link
-                    "thumbnail": r.get("thumbnailUrl"),
-                    "source": r.get("source"),
-                    "source_link": r.get("link"),  # Backend link -> client source_link
-                    "width": r.get("imageWidth"),
-                    "height": r.get("imageHeight"),
-                    "position": r.get("position"),
-                }
-                for r in results
-            ]
+            results = [BaseClient._transform_image_result(r) for r in results]
 
         response_data = {
             "success": True,
-            "query": data.get("search_params", {}).get("q", ""),
+            "query": (
+                data.get("search_params", {}).get("q", query)
+                if isinstance(data, dict)
+                else query
+            ),
             "total_results": search_info.get("total_results", "0"),
             "search_time": search_info.get("search_time", "0"),
             "results": results,
-            "credits_used": data.get("credits", 1),
+            "credits_used": data.get("credits", 0) if isinstance(data, dict) else 0,
         }
 
         return SearchResponse.model_validate(response_data)
@@ -176,7 +169,7 @@ class BaseClient:
         gl: str = "us",
         hl: str = "en",
         lr: str = "en",
-        location: LocationType | None = None,
+        location: str | LocationType | None = None,
     ) -> dict[str, Any]:
         """Build search request parameters - shared logic for search and image_search.
 
@@ -188,7 +181,7 @@ class BaseClient:
             gl: Country code
             hl: Interface language code
             lr: Content language restriction
-            location: Location type for local search
+            location: Location type for local search (e.g., 'US', 'GB', or LocationType.US)
 
         Returns:
             Dictionary of request parameters
@@ -212,7 +205,7 @@ class BaseClient:
         # Convert enum values to strings
         if "type" in params:
             params["type"] = params["type"].value
-        if "location" in params:
+        if "location" in params and isinstance(params["location"], LocationType):
             params["location"] = params["location"].value
 
         return params
@@ -235,7 +228,34 @@ class BaseClient:
         if not isinstance(data, list):
             data = [data]
 
-        responses = [BaseClient._parse_search_response(item) for item in data]
+        # Handle empty data - return empty response(s) instead of raising exception
+        if not data:
+            if isinstance(query, str):
+                # Single query with no data - return empty SearchResponse
+                return BaseClient._parse_search_response(None, query=query)
+            else:
+                # Batch query with no data - return list of empty SearchResponses
+                return [
+                    BaseClient._parse_search_response(None, query=q) for q in query
+                ]
+
+        # Normalize query to list for easier processing
+        queries = [query] if isinstance(query, str) else query
+
+        # Parse each response item
+        responses = [
+            BaseClient._parse_search_response(item, query=q)
+            for item, q in zip(data, queries[: len(data)])
+        ]
+
+        # If we have fewer responses than queries, fill with empty responses
+        if len(responses) < len(queries):
+            responses.extend(
+                [
+                    BaseClient._parse_search_response(None, query=q)
+                    for q in queries[len(responses) :]
+                ]
+            )
 
         # Return single response for single query, list for batch
         return responses[0] if isinstance(query, str) else responses

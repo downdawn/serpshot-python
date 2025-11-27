@@ -75,7 +75,7 @@ class AsyncSerpShot(BaseClient):
         gl: str = "us",
         hl: str = "en",
         lr: str = "en",
-        location: LocationType | None = None,
+        location: str | LocationType | None = None,
     ) -> SearchResponse | list[SearchResponse]:
         """Perform a Google search asynchronously (single or batch).
 
@@ -87,7 +87,7 @@ class AsyncSerpShot(BaseClient):
             hl: Interface language code (e.g., 'en', 'zh-CN', default: 'en')
             lr: Content language restriction (e.g., 'en', 'zh-CN', default: 'en')
             location: Location type for local search
-                (e.g., LocationType.US, LocationType.GB, default: None)
+                (e.g., 'US', 'GB', or LocationType.US, default: None)
 
         Returns:
             SearchResponse for single query, list[SearchResponse] for batch queries
@@ -135,7 +135,7 @@ class AsyncSerpShot(BaseClient):
         gl: str = "us",
         hl: str = "en",
         lr: str = "en",
-        location: LocationType | None = None,
+        location: str | LocationType | None = None,
     ) -> SearchResponse | list[SearchResponse]:
         """Perform a Google image search asynchronously (single or batch).
 
@@ -147,7 +147,7 @@ class AsyncSerpShot(BaseClient):
             hl: Interface language code (default: 'en')
             lr: Content language restriction (default: 'en')
             location: Location type for local search
-                (e.g., LocationType.US, LocationType.GB, default: None)
+                (e.g., 'US', 'GB', or LocationType.US, default: None)
 
         Returns:
             SearchResponse for single query, list[SearchResponse] for batch queries
@@ -179,6 +179,27 @@ class AsyncSerpShot(BaseClient):
 
         data = await self._http.request("POST", "/api/search/google", json=params)
         return self._process_search_response(data, query)
+
+    async def get_available_credits(self) -> int:
+        """Get available credits for the account asynchronously.
+
+        Returns:
+            Available credits as an integer
+
+        Raises:
+            AuthenticationError: If API key is invalid
+            APIError: If API returns an error
+            NetworkError: If network error occurs
+
+        Example:
+            >>> async def example():
+            ...     client = AsyncSerpShot(api_key="your-api-key")
+            ...     credits = await client.get_available_credits()
+            ...     print(f"Available credits: {credits}")
+            ...     await client.close()
+        """
+        data = await self._http.request("GET", "/api/credit/record/available_credits")
+        return int(data) if isinstance(data, (int, str)) else data
 
     async def close(self) -> None:
         """Close the client and cleanup resources.

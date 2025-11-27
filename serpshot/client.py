@@ -70,7 +70,7 @@ class SerpShot(BaseClient):
         gl: str = "us",
         hl: str = "en",
         lr: str = "en",
-        location: LocationType | None = None,
+        location: str | LocationType | None = None,
     ) -> SearchResponse | list[SearchResponse]:
         """Perform a Google search (single or batch).
 
@@ -82,7 +82,7 @@ class SerpShot(BaseClient):
             hl: Interface language code (e.g., 'en', 'zh-CN', default: 'en')
             lr: Content language restriction (e.g., 'en', 'zh-CN', default: 'en')
             location: Location type for local search
-                (e.g., LocationType.US, LocationType.GB, default: None)
+                (e.g., 'US', 'GB', or LocationType.US, default: None)
 
         Returns:
             SearchResponse for single query, list[SearchResponse] for batch queries
@@ -129,7 +129,7 @@ class SerpShot(BaseClient):
         gl: str = "us",
         hl: str = "en",
         lr: str = "en",
-        location: LocationType | None = None,
+        location: str | LocationType | None = None,
     ) -> SearchResponse | list[SearchResponse]:
         """Perform a Google image search (single or batch).
 
@@ -141,7 +141,7 @@ class SerpShot(BaseClient):
             hl: Interface language code (default: 'en')
             lr: Content language restriction (default: 'en')
             location: Location type for local search
-                (e.g., LocationType.US, LocationType.GB, default: None)
+                (e.g., 'US', 'GB', or LocationType.US, default: None)
 
         Returns:
             SearchResponse for single query, list[SearchResponse] for batch queries
@@ -172,6 +172,26 @@ class SerpShot(BaseClient):
 
         data = self._http.request("POST", "/api/search/google", json=params)
         return self._process_search_response(data, query)
+
+    def get_available_credits(self) -> int:
+        """Get available credits for the account.
+
+        Returns:
+            Available credits as an integer
+
+        Raises:
+            AuthenticationError: If API key is invalid
+            APIError: If API returns an error
+            NetworkError: If network error occurs
+
+        Example:
+            >>> client = SerpShot(api_key="your-api-key")
+            >>> credits = client.get_available_credits()
+            >>> print(f"Available credits: {credits}")
+            >>> client.close()
+        """
+        data = self._http.request("GET", "/api/credit/record/available_credits")
+        return int(data) if isinstance(data, (int, str)) else data
 
     def close(self) -> None:
         """Close the client and cleanup resources.
