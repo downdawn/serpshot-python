@@ -89,7 +89,7 @@ desktop.ini
 logs/
 
 # Internal plans
-docs/plans/
+docs
 
 # Ex
 publish.ps1

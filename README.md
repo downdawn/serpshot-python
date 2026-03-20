@@ -16,12 +16,6 @@ Official Python client for the [SerpShot API](https://www.serpshot.com) - Get re
 - 🔄 **Batch Queries** - Process up to 100 queries in a single request
 - 🛡️ **Smart Retries** - Built-in retry logic handles network issues automatically
 
-## API Endpoints
-
-The SDK uses the following SerpShot API endpoints:
-
-- **Main Search**: `/api/search/google` - For regular and image searches
-
 ## Installation
 
 ### Using pip
@@ -42,334 +36,185 @@ Free to use, just [register](https://www.serpshot.com/auth/register) to get your
 
 ## Quick Start
 
-### Synchronous Usage
-
-```python
-from serpshot import SerpShot
-
-# Initialize client (API key can be provided or read from SERPSHOT_API_KEY env var)
-client = SerpShot(api_key="your-api-key")
-
-# Perform a search
-response = client.search("Python programming")
-
-# Process results
-for result in response.results:
-    print(f"{result.title}: {result.link}")
-
-# Clean up
-client.close()
-```
-
-### With Context Manager (Recommended)
-
 ```python
 from serpshot import SerpShot
 
 with SerpShot(api_key="your-api-key") as client:
     response = client.search("Python programming")
-    print(f"Found {len(response.results)} results")
+    for result in response.results:
+        print(f"{result.title}: {result.link}")
 ```
 
-### Asynchronous Usage
+Set `SERPSHOT_API_KEY` env var to skip passing the key explicitly:
 
 ```python
-import asyncio
-from serpshot import AsyncSerpShot
-
-async def main():
-    async with AsyncSerpShot(api_key="your-api-key") as client:
-        response = await client.search("Python programming")
-        print(f"Found {len(response.results)} results")
-
-asyncio.run(main())
-```
-
-### Using Environment Variable
-
-You can set your API key via the `SERPSHOT_API_KEY` environment variable, eliminating the need to pass it explicitly:
-
-```bash
-export SERPSHOT_API_KEY="your-api-key"
-```
-
-```python
-from serpshot import SerpShot
-
-# API key will be automatically read from environment variable
 with SerpShot() as client:
     response = client.search("Python programming")
 ```
 
-## API Reference
-
-### SerpShot Client
-
-#### Initialize
-
-```python
-from serpshot import SerpShot
-
-client = SerpShot(
-    api_key="your-api-key",      # Optional: Your SerpShot API key (or set SERPSHOT_API_KEY env var)
-    base_url=None,                # Optional: Custom API endpoint
-    timeout=30.0,                 # Optional: Request timeout in seconds
-    max_retries=3,                # Optional: Maximum retry attempts
-)
-```
-
-#### search()
-
-Perform a Google search. Supports both single query and batch queries (up to 100 queries per request).
-
-```python
-from serpshot import SerpShot
-
-# Single search
-response = client.search(
-    query="search query",         # Required: Search query string or list of queries (max 100)
-    num=10,                       # Optional: Number of results per page (1-100)
-    page=1,                       # Optional: Page number for pagination (starts from 1)
-    gl="us",                      # Optional: Country code (e.g., 'us', 'uk', 'cn')
-    hl="en",                      # Optional: Language code (e.g., 'en', 'zh-CN')
-    lr="en",                      # Optional: Content language restriction (e.g., 'en', 'zh-CN')
-    location="US",                # Optional: Location for local search (e.g., 'US', 'GB', 'CN')
-)
-
-# Batch search (recommended for multiple queries)
-responses = client.search(
-    query=["Python", "JavaScript", "Rust"],  # List of queries (1-100)
-    num=10,
-    gl="us",
-    location="US",               # String location parameter supported
-)
-# Returns list[SearchResponse] when query is a list
-```
-
-**Note**: The `location` parameter accepts strings (recommended) or `LocationType` enum values.
-
-#### image_search()
-
-Perform a Google image search. Supports both single query and batch queries (up to 100 queries per request).
-
-```python
-# Single image search
-response = client.image_search(
-    query="cute puppies",         # Required: Image search query string or list (max 100)
-    num=10,                       # Optional: Number of results per page (1-100)
-    page=1,                       # Optional: Page number for pagination (starts from 1)
-    gl="us",                      # Optional: Country code
-    hl="en",                      # Optional: Language code
-    lr="en",                      # Optional: Content language restriction
-)
-
-# Batch image search
-responses = client.image_search(
-    query=["cats", "dogs", "birds"],  # List of queries (1-100)
-    num=10,
-)
-```
-
-### Response Model
-
-The `SearchResponse` object contains:
-
-```python
-class SearchResponse:
-    success: bool                 # Request success status
-    query: str                    # Original search query
-    total_results: str            # Estimate of total results (e.g., "About 12,300,000 results")
-    search_time: str              # Search execution time in seconds (as string)
-    results: list[SearchResult] | list[ImageResult]  # List of search results
-    credits_used: int             # Credits consumed
-```
-
-**Note**: When using batch search (passing a list of queries), `search()` returns `list[SearchResponse]` instead of a single `SearchResponse`.
-
-### Search Result Model
-
-Each result in `response.results` contains:
-
-```python
-class SearchResult:
-    title: str                    # Result title
-    link: str                     # Result URL
-    snippet: str                  # Description snippet
-    position: int                 # Position in results (1-based)
-```
-
-### Image Result Model
-
-For image searches, results contain:
-
-```python
-class ImageResult:
-    title: str                    # Image title
-    link: str                     # Image source URL
-    thumbnail: str                # Thumbnail URL
-    source: str                   # Source website
-    source_link: str              # Source page URL
-    width: int                    # Image width in pixels
-    height: int                   # Image height in pixels
-    position: int                 # Result position
-```
-
-## Advanced Examples
-
-### Batch Search
-
-Batch search allows you to process multiple queries (up to 100) in a single API call, which is more efficient than separate calls:
-
-```python
-from serpshot import SerpShot
-
-with SerpShot(api_key="your-api-key") as client:
-    queries = ["Python", "JavaScript", "Rust", "Go"]
-    responses = client.search(queries, num=10)  # Returns list[SearchResponse]
-    
-    for query, response in zip(queries, responses):
-        print(f"{query}: {len(response.results)} results")
-        if response.results:
-            print(f"  Top result: {response.results[0].title}\n")
-```
-
-### Pagination
-
-```python
-from serpshot import SerpShot
-
-with SerpShot(api_key="your-api-key") as client:
-    page1 = client.search("Python", num=10, page=1)
-    page2 = client.search("Python", num=10, page=2)
-    page3 = client.search("Python", num=10, page=3)
-```
-
-### Asynchronous Batch Search
+Async:
 
 ```python
 import asyncio
 from serpshot import AsyncSerpShot
 
 async def main():
-    async with AsyncSerpShot(api_key="your-api-key") as client:
-        queries = ["Python", "JavaScript", "Rust"]
-        responses = await client.search(queries, num=10)
-        for response in responses:
-            print(f"Found {len(response.results)} results")
+    async with AsyncSerpShot() as client:
+        response = await client.search("Python programming")
 
 asyncio.run(main())
+```
+
+## MCP Integration
+
+SerpShot includes a built-in [MCP](https://modelcontextprotocol.io) server, letting AI assistants (Claude, Cursor, Windsurf, etc.) call Google Search directly as a tool.
+
+### Install MCP extra
+
+```bash
+pip install 'serpshot[mcp]'
+# or
+uv add 'serpshot[mcp]'
+```
+
+### Configuration
+
+Add the following to your MCP client's config (Claude Code, Cursor, Windsurf, etc.):
+
+```json
+{
+  "mcpServers": {
+    "serpshot": {
+      "command": "python",
+      "args": ["-m", "serpshot.mcp"],
+      "env": { "SERPSHOT_API_KEY": "your_key_here" }
+    }
+  }
+}
+```
+
+Or with **uvx** (no install required):
+
+```json
+{
+  "mcpServers": {
+    "serpshot": {
+      "command": "uvx",
+      "args": ["--from", "serpshot[mcp]", "serpshot-mcp"],
+      "env": { "SERPSHOT_API_KEY": "your_key_here" }
+    }
+  }
+}
+```
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `google_search` | Search Google — returns organic results, supports `query`, `num`, `gl`, `hl` |
+| `google_image_search` | Search Google Images — returns image results with thumbnails and source URLs |
+
+## API Reference
+
+### SerpShot(api_key, base_url, timeout, max_retries)
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `api_key` | env var | SerpShot API key, falls back to `SERPSHOT_API_KEY` |
+| `base_url` | `None` | Custom API endpoint |
+| `timeout` | `30.0` | Request timeout in seconds |
+| `max_retries` | `3` | Maximum retry attempts |
+
+Use `AsyncSerpShot` for async usage — same interface, all methods are awaitable.
+
+### search(query, ...)
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `query` | required | Search string or list of strings (max 100) |
+| `num` | `10` | Results per page (1–100) |
+| `page` | `1` | Page number |
+| `gl` | `"us"` | Country code |
+| `hl` | `"en"` | Interface language |
+| `lr` | — | Content language restriction |
+| `location` | — | Location for local search |
+
+Returns `SearchResponse`, or `list[SearchResponse]` when `query` is a list.
+
+### image_search(query, ...)
+
+Same parameters as `search()` except `lr` and `location` are not supported.
+
+### get_available_credits()
+
+```python
+with SerpShot() as client:
+    print(client.get_available_credits())
+```
+
+### Response Models
+
+**SearchResponse**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `query` | `str` | Original query |
+| `total_results` | `str` | Estimated total (e.g. `"About 12,300,000 results"`) |
+| `search_time` | `str` | Execution time in seconds |
+| `results` | `list` | `list[SearchResult]` or `list[ImageResult]` |
+| `credits_used` | `int` | Credits consumed |
+
+**SearchResult**: `title`, `link`, `snippet`, `position`
+
+**ImageResult**: `title`, `link`, `thumbnail`, `source`, `source_link`, `width`, `height`, `position`
+
+## Examples
+
+### Batch Search
+
+```python
+with SerpShot() as client:
+    responses = client.search(["Python", "JavaScript", "Rust"], num=10)
+    for r in responses:
+        print(f"{r.query}: {r.results[0].title}")
 ```
 
 ### Error Handling
 
 ```python
-from serpshot import (
-    SerpShot,
-    AuthenticationError,
-    RateLimitError,
-    InsufficientCreditsError,
-    APIError,
-    NetworkError,
-)
+from serpshot import SerpShot, AuthenticationError, RateLimitError, InsufficientCreditsError, APIError, NetworkError
 
 try:
-    with SerpShot(api_key="your-api-key") as client:
+    with SerpShot() as client:
         response = client.search("test query")
-except AuthenticationError as e:
-    print(f"Invalid API key: {e}")
+except AuthenticationError:
+    print("Invalid API key")
 except RateLimitError as e:
-    print(f"Rate limit exceeded. Retry after {e.retry_after}s")
+    print(f"Rate limited, retry after {e.retry_after}s")
 except InsufficientCreditsError as e:
-    print(f"Insufficient credits. Need: {e.credits_required}")
-except APIError as e:
-    print(f"API error ({e.status_code}): {e.message}")
-except NetworkError as e:
-    print(f"Network error: {e}")
+    print(f"Need {e.credits_required} credits")
+except (APIError, NetworkError) as e:
+    print(f"Error: {e}")
 ```
 
-### Custom Configuration
-
-```python
-client = SerpShot(
-    api_key="your-api-key",
-    timeout=60.0,        # Longer timeout for slow connections
-    max_retries=5,       # More retries for reliability
-)
-```
-
-## Get Available Credits
-
-```python
-from serpshot import SerpShot
-
-with SerpShot(api_key="your-api-key") as client:
-    credits = client.get_available_credits()
-    print(f"Available credits: {credits}")
-```
-
-## Rate Limits
-
-Please refer to your SerpShot account dashboard for rate limit information. The SDK automatically handles rate limiting with exponential backoff.
-
-## Credit Costs
-
-Different search operations consume different amounts of credits.
-
-Use the `response.credits_used` field to track actual credit consumption for each request.
+The SDK handles rate limiting automatically with exponential backoff. Track credit usage via `response.credits_used`.
 
 ## Development
 
-### Setup
-
 ```bash
-# Clone the repository
 git clone https://github.com/downdawn/serpshot-python.git
 cd serpshot-python
-
-# Install with dev dependencies using uv
 uv sync --dev
-
-# Or using pip
-pip install -e ".[dev]"
-```
-
-### Run Tests
-
-```bash
 pytest
 ```
 
-### Type Checking
-
-```bash
-mypy serpshot
-```
-
-### Linting
-
-```bash
-ruff check serpshot
-```
-
-## Examples
-
-Check out the [examples](examples/) directory for more usage examples:
-
-- [sync_example.py](examples/sync_example.py) - Synchronous usage examples
-- [async_example.py](examples/async_example.py) - Asynchronous usage examples
-
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).
 
 ## Support
 
-- 📧 Email: support@serpshot.com
-- 📖 Documentation: https://www.serpshot.com/docs
-- 🐛 Issues: https://github.com/downdawn/serpshot-python/issues
-
-## Links
-
-- [SerpShot Website](https://www.serpshot.com)
-- [API Documentation](https://www.serpshot.com/docs)
-- [Get API Key](https://www.serpshot.com/dashboard/api-keys)
+- 📧 support@serpshot.com
+- 📖 [Documentation](https://www.serpshot.com/docs)
+- 🐛 [Issues](https://github.com/downdawn/serpshot-python/issues)
+- 🔑 [Get API Key](https://www.serpshot.com/dashboard/api-keys)

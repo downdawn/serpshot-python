@@ -1,17 +1,38 @@
 """MCP server for Serpshot Google Search API.
 
+Exposes two tools:
+  - google_search:       Search Google and return organic results
+  - google_image_search: Search Google Images and return image results
+
 Usage:
     python -m serpshot.mcp
 
-Environment:
-    SERPSHOT_API_KEY: Your Serpshot API key (required)
+    # Or via uvx (no install required):
+    uvx --from serpshot serpshot-mcp
 
-Claude Desktop config (~/.claude/claude_desktop_config.json):
+Environment:
+    SERPSHOT_API_KEY: Your Serpshot API key (required).
+                     Get one at https://serpshot.com/dashboard
+
+--- MCP Client Configuration ---
+
+Any MCP-compatible client (Claude Code, Cursor, Windsurf, etc.):
     {
       "mcpServers": {
         "serpshot": {
           "command": "python",
           "args": ["-m", "serpshot.mcp"],
+          "env": { "SERPSHOT_API_KEY": "your_key_here" }
+        }
+      }
+    }
+
+Using uvx (no install required):
+    {
+      "mcpServers": {
+        "serpshot": {
+          "command": "uvx",
+          "args": ["--from", "serpshot[mcp]", "serpshot-mcp"],
           "env": { "SERPSHOT_API_KEY": "your_key_here" }
         }
       }
