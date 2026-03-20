@@ -25,6 +25,21 @@ Example:
         ...         print(f"Found {response.total_results} results")
         >>>
         >>> asyncio.run(main())
+
+    MCP server usage (requires pip install 'serpshot[mcp]'):
+        Start the MCP server:
+        $ python -m serpshot.mcp
+
+        Claude Desktop config (~/.claude/claude_desktop_config.json):
+        {
+          "mcpServers": {
+            "serpshot": {
+              "command": "python",
+              "args": ["-m", "serpshot.mcp"],
+              "env": { "SERPSHOT_API_KEY": "your_key" }
+            }
+          }
+        }
 """
 
 __version__ = "0.1.3"
