@@ -92,6 +92,11 @@ class SearchResponse(BaseModel):
     success: bool = Field(..., description="Whether request was successful")
     query: str = Field(..., description="Original search query")
     total_results: str = Field(..., description="Total result count estimate")
+
+    @field_validator("total_results", mode="before")
+    @classmethod
+    def coerce_total_results(cls, v: object) -> str:
+        return str(v)
     search_time: str = Field(..., description="Search time in seconds")
     results: list[SearchResult] | list[ImageResult] = Field(
         default_factory=list, description="Search results"
