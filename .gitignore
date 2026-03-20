@@ -88,6 +88,9 @@ desktop.ini
 *.log
 logs/
 
+# Internal plans
+docs/plans/
+
 # Ex
 publish.ps1
 publish.sh
